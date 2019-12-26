@@ -52,20 +52,39 @@ CREATE TABLE `filenames` (
 
 CREATE VIEW `fqpn` AS
   SELECT
-    `hostnames`.`hostname`,
-    `dirnames`.`dirname`,
-    `filenames`.`filename`,
-    `file_instance`.`fileid` AS `fileid`
+    `h`.`hostname` AS `hostname`,
+    `d`.`dirname`  AS `dirname`,
+    `f`.`filename` AS `filename`,
+    `fi`.`fileid` AS `fileid`
   FROM
-    `hostnames`,
-    `dirnames`,
-    `filenames`,
-    `file_instance`
-  WHERE
-    `hostnames`.`hostid` = `file_instance`.`hostid` AND
-    `dirnames`.`dirid`   = `file_instance`.`dirid` AND
-    `filenames`.`fileid` = `file_instance`.`fileid`;
+    `file_instance` AS `fi`
+    INNER JOIN `dirnames` AS `d`
+     ON `d`.`dirid` = `fi`.`dirid`
+    INNER JOIN `hostnames` AS `h`
+     ON `h`.`hostid` = `fi`.`hostid`
+    INNER JOIN `filenames` AS `f`
+     ON `f`.`fileid` = `fi`.`fileid`;
 
+INSERT INTO `fqpn`
+  SET
+    `fqpn`.`hostname`='localhost';
+
+INSERT INTO `fqpn`
+  SET
+    `fqpn`.`dirname`='/foo';
+
+UPDATE `fqpn`
+  SET
+    `fqpn`.`filename`='bar'
+  WHERE
+    `fqpn`.`hostname`='localhost' AND
+    `fqpn`.`dirname`='/foo';
+
+select * from hostnames;
+select * from dirnames;
+select * from filenames;
+select * from file_instance;
+     
 CREATE VIEW
     `fstat` AS
   SELECT
@@ -81,29 +100,6 @@ CREATE VIEW
   WHERE
     `fqpn`.`fileid` = `stats`.`fileid`;
 
-INSERT INTO `hostnames` SET `hostname` = 'localhost';
-INSERT INTO `dirnames` SET `dirname` = '/foo';
-
-INSERT INTO `fqpn` SET `fqpn`.`file`='bar'
- WHERE `fqpn`.`dirname`='/foo' AND `fqpn`.`hostname`='localhost';
-
-     
-INSERT INTO `fstat`
- SET
-     `fstat`.`size`='0',
-     `fstat`.`mtime`='12345', 
-     `fstat.`hash`='ABC789'
-     `fstat`.`fileid` = (
-  SELECT
-       `fqpn`.`fileid`
-  FROM
-       `fqpn`
-  WHERE
-       `fqpn`.`filename`='bar' AND
-       `fqpn`.`dirname`='/foo' AND
-       `fqpn`.`hostname`='localhost')
-;
-     
 
 SELECT * FROM `fqpn`;
 SELECT * FROM `fstat`;
