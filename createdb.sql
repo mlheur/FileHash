@@ -1,105 +1,117 @@
 CREATE OR REPLACE DATABASE `FileHash`;
 USE `FileHash`;
 
-CREATE TABLE `hostnames` (
-  `hostid`	BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `hostname`	TEXT UNIQUE NOT NULL
+--------------------------------------------------------------------------------
+-- hosts
+--------------------------------------------------------------------------------
+CREATE TABLE `hosts`
+(`hn` VARCHAR(255) UNIQUE NOT NULL
+,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
 ) ENGINE=MyISAM;
 
-CREATE TABLE `dirnames` (
-  `dirid`	BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `dirname`	TEXT NOT NULL
+
+INSERT INTO `hosts` (`hn`)
+VALUES ('budweiser')
+,('labatts')
+,('canadian')
+,('losmuertos')
+;
+
+-- SELECT * from `hosts`;
+
+--------------------------------------------------------------------------------
+-- dirs
+--------------------------------------------------------------------------------
+CREATE TABLE `dirs`
+(`dn` TEXT UNIQUE NOT NULL
+,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
 ) ENGINE=MyISAM;
 
-CREATE TABLE `file_instance` (
-  `fileid`	BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-  `hostid`	BIGINT NOT NULL,
-  `dirid`	BIGINT NOT NULL,
-  CONSTRAINT `pk_hostid`
-    FOREIGN KEY (`hostid`)
-    REFERENCES `hostnames` (`hostid`)
-    ON UPDATE NO ACTION
-    ON DELETE SET NULL,
-  CONSTRAINT `pk_dirid`
-    FOREIGN KEY (`dirid`)
-    REFERENCES `dirnames` (`dirid`)
-    ON UPDATE NO ACTION
-    ON DELETE CASCADE
+
+INSERT INTO `dirs` (`dn`)
+VALUES ('/')
+,('/bin')
+,('/etc')
+,('/usr')
+;
+
+-- SELECT * from `dirs`;
+
+--------------------------------------------------------------------------------
+-- dir_on_host
+--------------------------------------------------------------------------------
+CREATE TABLE `dir_on_host`
+(`hostid` BIGINT NOT NULL
+,`dirid` BIGINT NOT NULL
+,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
+,CONSTRAINT `pk_hostid`
+ FOREIGN KEY (`hostid`)
+ REFERENCES `hosts` (`id`)
+ ON DELETE CASCADE
+,CONSTRAINT `pk_dirid`
+ FOREIGN KEY (`dirid`)
+ REFERENCES `dirs` (`id`)
 ) ENGINE=MyISAM;
 
-CREATE TABLE `stats` (
-  `size`	INT NOT NULL,
-  `mtime`	INT NOT NULL,
-  `hash`	VARCHAR(64) NOT NULL,
-  `fileid`	BIGINT NOT NULL,
-  PRIMARY KEY (`size`,`mtime`,`hash`,`fileid`),
-  CONSTRAINT `pk_fileid`
-    FOREIGN KEY (`fileid`)
-    REFERENCES `file_instance` (`fileid`)
-    ON UPDATE NO ACTION
-    ON DELETE CASCADE
+INSERT INTO `dir_on_host` (`hostid`,`dirid`)
+VALUES (1,1)
+,(1,2)
+,(1,3)
+,(2,1)
+,(2,4)
+,(3,1)
+,(3,3)
+,(3,4)
+;
+
+CREATE VIEW `fqdn` AS
+SELECT CONCAT(`hn`,':',`dn`) AS `fqdn`
+FROM `dir_on_host` `dh`
+INNER JOIN `hosts` `h`
+ON `dh`.`hostid`=`h`.`id`
+INNER JOIN `dirs` `d`
+ON `dh`.`dirid`=`d`.`id`;
+
+-- SELECT * FROM `dir_on_host`;
+
+--------------------------------------------------------------------------------
+-- fstats
+--------------------------------------------------------------------------------
+CREATE TABLE `fstats`
+(`size` BIGINT NOT NULL
+,`mtime` BIGINT NOT NULL
+,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
 ) ENGINE=MyISAM;
 
-CREATE TABLE `filenames` (
-  `fileid`	BIGINT UNSIGNED PRIMARY KEY,
-  `filename`	TEXT NOT NULL,
-  CONSTRAINT `pk_fileid`
-    FOREIGN KEY (`fileid`)
-    REFERENCES `file_instance` (`fileid`)
-    ON UPDATE NO ACTION
-    ON DELETE CASCADE
+
+--------------------------------------------------------------------------------
+-- hashes
+--------------------------------------------------------------------------------
+CREATE TABLE `hashes`
+(`hash` VARCHAR(64) UNIQUE NOT NULL
+,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
 ) ENGINE=MyISAM;
 
-CREATE VIEW `fqpn` AS
-  SELECT
-    `h`.`hostname` AS `hostname`,
-    `d`.`dirname`  AS `dirname`,
-    `f`.`filename` AS `filename`,
-    `fi`.`fileid` AS `fileid`
-  FROM
-    `file_instance` AS `fi`
-    INNER JOIN `dirnames` AS `d`
-     ON `d`.`dirid` = `fi`.`dirid`
-    INNER JOIN `hostnames` AS `h`
-     ON `h`.`hostid` = `fi`.`hostid`
-    INNER JOIN `filenames` AS `f`
-     ON `f`.`fileid` = `fi`.`fileid`;
 
-INSERT INTO `fqpn`
-  SET
-    `fqpn`.`hostname`='localhost';
+--------------------------------------------------------------------------------
+-- file_in_dir
+--------------------------------------------------------------------------------
+CREATE TABLE `file_in_dir`
+(`dirhostid` BIGINT UNSIGNED NOT NULL
+,`hashid` BIGINT UNSIGNED NOT NULL
+,`filename` TEXT NOT NULL
+,`size` BIGINT UNSIGNED NOT NULL
+,`mtime` INT UNSIGNED NOT NULL
+,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
+,CONSTRAINT `pk_dirhostid`
+ FOREIGN KEY (`dirhostid`)
+ REFERENCES `dir_on_host` (`id`)
+ ON DELETE CASCADE
+) ENGINE=MyISAM;
 
-INSERT INTO `fqpn`
-  SET
-    `fqpn`.`dirname`='/foo';
-
-UPDATE `fqpn`
-  SET
-    `fqpn`.`filename`='bar'
-  WHERE
-    `fqpn`.`hostname`='localhost' AND
-    `fqpn`.`dirname`='/foo';
-
-select * from hostnames;
-select * from dirnames;
-select * from filenames;
-select * from file_instance;
-     
-CREATE VIEW
-    `fstat` AS
-  SELECT
-    `fqpn`.`hostname`,
-    `fqpn`.`dirname`,
-    `fqpn`.`filename`,
-    `stats`.`size`,
-    `stats`.`mtime`,
-    `stats`.`hash`
-  FROM
-    `fqpn`,
-    `stats`
-  WHERE
-    `fqpn`.`fileid` = `stats`.`fileid`;
-
-
-SELECT * FROM `fqpn`;
-SELECT * FROM `fstat`;
+-- CREATE VIEW `fqpn` AS
+-- (SELECT (CONCAT(`fqdn`,'/',`filename`)) AS `fqpn`
+-- FROM file_in_dir `fd`
+-- INNER JOIN `fqdn` `fqdn`
+-- ON `fd`.`dirhostid`=`fqdn`.`id`
+-- );
