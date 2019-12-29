@@ -3,14 +3,13 @@
 from sys import argv
 from os import unlink
 from os.path import abspath, realpath, dirname, basename
+from mysql import connector as dbms
 from site import addsitedir
 from fcntl import flock, LOCK_EX, LOCK_UN
 
 addsitedir(dirname(realpath(argv[0])))
-import sqlite3
 from SQL import SQL
 from time import sleep, time as now
-
 
 class TransactionError(Exception):
     def __init__(self, arg):
@@ -20,36 +19,56 @@ class TransactionError(Exception):
 class dbi(object):
     """ Interface to store and retrieve file hash info.  """
 
-    def __init__(self, dbn, verbose=False, quiet=False):
+    def __init__(self, dbargs, printargs):
         """ Instantiate an interface with a particular data base. """
-        self.verbose = verbose
-        self.quiet = quiet
-        self.attached = False
-        self.dbn = dbn
+        self.printargs = printargs
+        self.dbargs = dbargs
         self.conn = None
-        self.attach(dbn);
+        self.attached = False
+        self.conn = None
+        self.attach(self.dbargs)
 
-    def attach(self, dbn, keepalive=False):
-        if not keepalive: self.close()
+    def attach(self, dbargs={}):
+        if len(dbargs) == 0:
+            dbargs = self.dbargs
+
+        if self.printargs["verbose"]:
+            print("Calling attach with dbargs {}".format(dbargs))
+
+        if not dbargs["keepalive"]:
+            self.close()
         try:
-            self.conn = sqlite3.connect(dbn)
-        except error as e:
+            u = dbargs["user"]
+            d = dbargs["dbn"]
+            p = dbargs["port"]
+            h = dbargs["host"]
+            pw = dbargs["pass"]
+            if self.printargs["debug"]: print("u:{} d:{} p:{} h:{} pw:{}".format(u,d,p,h,pw))
+            self.conn = dbms.connect(user=u
+                                    ,database=d
+                                    ,port=p
+                                    ,host=h
+                                    ,password=pw
+                                    )
+        except dbms.errors.ProgrammingError as pe:
+            raise pe
+        except Exception as e:
             print(e)
             self.close()
-            return
+            raise RuntimeError("Unable to connect to the database")
         self.c = self.conn.cursor()
-        if self.c.execute(SQL.ATTACH.format(dbn)):
-            self.attached = True
+        if self.c.execute("USE `{}`".format(dbargs["dbn"])):
+            self.atteched = True
         return self
 
     def show(self):
         print("{}".format(self))
 
     def __str__(self):
-        return "dbn=[{}] conn=[{}] c=[{}]".format(self.dbn, self.conn, self.c)
+        return "dbn=[{}] conn=[{}] c=[{}]".format(self.dbargs["dbn"], self.conn, self.c)
 
     def close(self):
-        if self.conn is None: return
+        if self.conn is None: return self
         self.conn.close()
         self.conn = None
         return self
@@ -95,7 +114,7 @@ class dbi(object):
 
     def select(self, key, vals=None):
         R = self.q(SQL.SELECT[key], vals, "S")
-        if self.verbose:
+        if self.printargs["verbose"]:
             print("R:[{}]".format(R))
         if R is None:
             return []
@@ -109,25 +128,29 @@ class dbi(object):
         self.q(SQL.CREATE[table])
         return self
 
-    def createdb(self, dbn=None):
-        if dbn is None: dbn = self.dbn
-        self.close().attach(dbn)
-        for table in SQL.TABLES:
-            self.drop(table).create(table)
-        return self
-
-
 if __name__ == "__main__":
-    d = dbi("test_dbi.db", True).createdb()
+    _dbargs = {"user"      : "FileHash"
+              ,"port"      : 8306
+              ,"host"      : "rdbms.telus.local"
+              ,"dbn"       : "FileHash"
+              ,"pass"      : "dbms"
+              ,"keepalive" : False
+    }
+
+    _printargs = {"quiet": False
+                 ,"verbose": True
+                 ,"debug": True
+    }
+
+    d = dbi(_dbargs,_printargs)
     f = realpath(abspath(argv[0]))
     from socket import gethostname as hostname
-    from file_hasher import hash, mkdict_finfo, mklist_dinfo
+    from file_hasher import hash
 
     h = hash(f)
-    finfo = mkdict_finfo(f)
-    d = d.insert("finfo", mklist_dinfo(finfo, "0" * 64, 0, 0))
-    print("allhashes: {}".format(d.select("allhashes")))
-    d = d.update("finfo", mklist_dinfo(finfo, h))
-    print("dinfo: {}".format(d.select("dinfo_from_host_fqpn", [hostname(), dirname(f), basename(f)])))
+    d.insert("hn",[hostname()])
+    d.insert("dn",[dirname(f)])
+    d.insert("dh",[hostname(),dirname(f)])
+    d.select("all_from_fqdn")
 
     raise RuntimeError("this is meant to be imported")
