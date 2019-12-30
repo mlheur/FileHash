@@ -38,17 +38,15 @@ class dbi(object):
         if not dbargs["keepalive"]:
             self.close()
         try:
-            u = dbargs["user"]
             d = dbargs["dbn"]
-            p = dbargs["port"]
+            u = dbargs["user"]
+            p = dbargs["pass"]
             h = dbargs["host"]
-            pw = dbargs["pass"]
-            if self.printargs["debug"]: print("u:{} d:{} p:{} h:{} pw:{}".format(u,d,p,h,pw))
-            self.conn = dbms.connect(user=u
-                                    ,database=d
-                                    ,port=p
+            if self.printargs["debug"]: print("d:{} u:{} p:{} h:{}".format(d,u,p,h))
+            self.conn = dbms.connect(database=d
+                                    ,user=u
+                                    ,password=p
                                     ,host=h
-                                    ,password=pw
                                     )
         except dbms.errors.ProgrammingError as pe:
             raise pe
@@ -129,11 +127,10 @@ class dbi(object):
         return self
 
 if __name__ == "__main__":
-    _dbargs = {"user"      : "FileHash"
-              ,"port"      : 8306
-              ,"host"      : "rdbms.telus.local"
-              ,"dbn"       : "FileHash"
+    _dbargs = {"dbn"       : "FileHash"
+              ,"user"      : "FileHash"
               ,"pass"      : "dbms"
+              ,"host"      : "rdbms.telus.local"
               ,"keepalive" : False
     }
 
