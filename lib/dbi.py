@@ -29,6 +29,7 @@ class dbi(object):
         self.attach(self.dbargs)
 
     def attach(self, dbargs={}):
+        self.attached = False
         if len(dbargs) == 0:
             dbargs = self.dbargs
 
@@ -55,8 +56,11 @@ class dbi(object):
             self.close()
             raise RuntimeError("Unable to connect to the database")
         self.c = self.conn.cursor()
-        if self.c.execute("USE `{}`".format(dbargs["dbn"])):
-            self.atteched = True
+        stmt_use = "USE `{}`;".format(dbargs["dbn"])
+        if self.printargs["debug"]:
+            print("got cursor {}, executing {}".format(self.c,stmt_use))
+        self.c.execute(stmt_use)
+        self.attached = True
         return self
 
     def show(self):
@@ -73,7 +77,7 @@ class dbi(object):
 
     def q(self, stmt, vals=None, call="Q"):
         if self.attached and (stmt is not None and stmt != ""):
-            if self.verbose:
+            if self.printargs["verbose"]:
                 print("{}:[{}]\nV:[{}]".format(call, stmt, vals))
             try:
                 if vals is not None:
@@ -81,10 +85,15 @@ class dbi(object):
                 else:
                     self.c.execute(stmt)
             except Exception as e:
-                if self.verbose:
+                if self.printargs["verbose"]:
                     print("sql error {}".format(e))
                 return None
-            return self.c.fetchall()
+            try:
+                return self.c.fetchall()
+            except dbms.errors.InterfaceError as ie:
+                return []
+            except Exception as e:
+                raise e
 
     def lock(self):
         self._lck = open("dbi.lock", "w")
