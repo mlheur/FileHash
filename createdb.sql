@@ -26,7 +26,7 @@ CREATE TABLE `dirs`
 CREATE TABLE `dir_on_host`
 (`hid` BIGINT NOT NULL
 ,`did` BIGINT NOT NULL
-,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
+,PRIMARY KEY(`hid`,`did`)
 ,CONSTRAINT `pk_hid`
  FOREIGN KEY (`hid`)
  REFERENCES `hosts` (`id`)
@@ -36,9 +36,8 @@ CREATE TABLE `dir_on_host`
  REFERENCES `dirs` (`id`)
 ) ENGINE=MyISAM;
 
-CREATE VIEW `vw_fqdn` (`id`,`hn`,`dn`,`fqdn`,`hid`,`did`) AS
-SELECT `dh`.`id`
-,`h`.`hn`
+CREATE VIEW `vw_fqdn` (`hn`,`dn`,`fqdn`,`hid`,`did`) AS
+SELECT `h`.`hn`
 ,`d`.`dn`
 ,CONCAT(`h`.`hn`,':',`d`.`dn`)
 ,`dh`.`hid`
@@ -54,15 +53,20 @@ ON `dh`.`did`=`d`.`id`
 -- file_in_dir
 --------------------------------------------------------------------------------
 CREATE TABLE `file_in_dir`
-(`dhid` BIGINT UNSIGNED NOT NULL
+(`hid` BIGINT UNSIGNED NOT NULL
+,`did` BIGINT UNSIGNED NOT NULL
 ,`hash` VARCHAR(64) NOT NULL
 ,`fn` TEXT NOT NULL
 ,`size` BIGINT UNSIGNED NOT NULL
 ,`mtime` INT UNSIGNED NOT NULL
 ,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
-,CONSTRAINT `pk_dhid`
- FOREIGN KEY (`dhid`)
- REFERENCES `dir_on_host` (`id`)
+,CONSTRAINT `pk_hid`
+ FOREIGN KEY (`hid`)
+ REFERENCES `dir_on_host` (`did`)
+ ON DELETE CASCADE
+,CONSTRAINT `pk_did`
+ FOREIGN KEY (`did`)
+ REFERENCES `dir_on_host` (`did`)
  ON DELETE CASCADE
 ) ENGINE=MyISAM;
 
@@ -78,7 +82,7 @@ SELECT `fd`.`id`
 ,(CONCAT(`vw_fqdn`.`fqdn`,'/',`fd`.`fn`))
 FROM file_in_dir `fd`
 INNER JOIN `vw_fqdn`
-ON `fd`.`dhid`=`vw_fqdn`.`id`
+ON (`fd`.`hid`=`vw_fqdn`.`hid` AND `fd`.`did` = `vw_fqdn`.`did`)
 ;
 
 --DBG--  --------------------------------------------------------------------------------

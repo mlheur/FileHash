@@ -5,7 +5,6 @@ from os import unlink
 from os.path import abspath, realpath, dirname, basename
 from mysql import connector as dbms
 from site import addsitedir
-from fcntl import flock, LOCK_EX, LOCK_UN
 
 addsitedir(dirname(realpath(argv[0])))
 from SQL import SQL
@@ -33,17 +32,17 @@ class dbi(object):
         if len(dbargs) == 0:
             dbargs = self.dbargs
 
-        if self.printargs["verbose"]:
+        if "verbose" in self.printargs.keys() and self.printargs["verbose"]:
             print("Calling attach with dbargs {}".format(dbargs))
 
-        if not dbargs["keepalive"]:
+        if "keepalive" in dbargs and not dbargs["keepalive"]:
             self.close()
         try:
             d = dbargs["dbn"]
             u = dbargs["user"]
             p = dbargs["pass"]
             h = dbargs["host"]
-            if self.printargs["debug"]: print("d:{} u:{} p:{} h:{}".format(d,u,p,h))
+            if "debug" in self.printargs and self.printargs["debug"]: print("d:{} u:{} p:{} h:{}".format(d,u,p,h))
             self.conn = dbms.connect(database=d
                                     ,user=u
                                     ,password=p
@@ -57,7 +56,7 @@ class dbi(object):
             raise RuntimeError("Unable to connect to the database")
         self.c = self.conn.cursor()
         stmt_use = "USE `{}`;".format(dbargs["dbn"])
-        if self.printargs["debug"]:
+        if "debug" in self.printargs and self.printargs["debug"]:
             print("got cursor {}, executing {}".format(self.c,stmt_use))
         self.c.execute(stmt_use)
         self.attached = True
@@ -77,7 +76,7 @@ class dbi(object):
 
     def q(self, stmt, vals=None, call="Q"):
         if self.attached and (stmt is not None and stmt != ""):
-            if self.printargs["verbose"]:
+            if "verbose" in self.printargs and self.printargs["verbose"]:
                 print("{}:[{}]\nV:[{}]".format(call, stmt, vals))
             try:
                 if vals is not None:
@@ -85,7 +84,7 @@ class dbi(object):
                 else:
                     self.c.execute(stmt)
             except Exception as e:
-                if self.printargs["verbose"]:
+                if "verbose" in self.printargs and self.printargs["verbose"]:
                     print("sql error {}".format(e))
                 return None
             try:
@@ -121,7 +120,7 @@ class dbi(object):
 
     def select(self, key, vals=None):
         R = self.q(SQL.SELECT[key], vals, "S")
-        if self.printargs["verbose"]:
+        if "verbose" in self.printargs and self.printargs["verbose"]:
             print("R:[{}]".format(R))
         if R is None:
             return []
@@ -139,7 +138,7 @@ if __name__ == "__main__":
     _dbargs = {"dbn"       : "FileHash"
               ,"user"      : "FileHash"
               ,"pass"      : "dbms"
-              ,"host"      : "rdbms.telus.local"
+              ,"host"      : "localhost"
               ,"keepalive" : False
     }
 

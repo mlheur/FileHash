@@ -10,11 +10,10 @@ class SQL:
 
     SELECT['all_from_fqdn'] = '''SELECT * FROM `vw_fqdn`'''
     SELECT['all_from_fqpn'] = '''SELECT * FROM `vw_fqpn`'''
- 
     SELECT['hid_from_hn'] = '''SELECT `id` FROM `hosts` WHERE `hn` = %s'''
-
     SELECT['did_from_dn'] = '''SELECT `id` FROM `dirs`  WHERE `dn` = %s'''
-
+    SELECT['hid_from_fqdn'] = '''SELECT `hid` FROM `vw_fqdn` WHERE `fqdn` = %s'''
+    SELECT['did_from_fqdn'] = '''SELECT `did` FROM `vw_fqdn` WHERE `fqdn` = %s'''
 
 
     INSERT['hn'] =\
@@ -28,7 +27,11 @@ class SQL:
        VALUES(({}),({}))'''\
     .format(SELECT['hid_from_hn'],SELECT['did_from_dn'])
 
-
+    INSERT['fqpn'] =\
+    '''INSERT IGNORE INTO `file_in_dir` (`hid`,`did`,`fn`,`size`,`mtime`,`hash`)
+       VALUES ((SELECT `hid` FROM `vw_fqdn` WHERE `fqdn` = %s)
+       ,(SELECT `did` FROM `vw_fqdn` WHERE `fqdn` = %s)
+       ,%s,%s,%s,%s)'''
 
 if __name__ == "__main__":
     raise RuntimeError("this is meant to be imported")
