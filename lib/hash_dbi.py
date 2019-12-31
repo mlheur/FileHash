@@ -14,8 +14,8 @@ class hash_dbi(dbi):
 
     def mkdict_hash_flist(self):
         table = {}
-        for hash in self.select_allhashes():
-            table[hash] = self.select_dinfo_from_hash(hash)
+        for hash in self.select_distinct_hashes():
+            table[hash] = self.select_all_from_hash(hash)
         return table
 
     def report(self, opts=None):

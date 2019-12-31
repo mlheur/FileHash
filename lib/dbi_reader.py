@@ -13,11 +13,14 @@ from file_hasher import mklist_finfo, mkdict_finfo, mkdict_dinfo
 class dbi_reader(dbi):
     """ wrapped select fuctions for dbi """
 
-    def select_hid_from_hn(self, hn):
-        R = None
-        for V in self.select("hid_from_hn", [hn]):
-            R = V[0]
-        return R
+    def select_all_from_fqpn(self):
+        return self.select("all_from_fqpn")
+
+    def select_distinct_hashes(self):
+        return self.select("distinct_hashes")
+
+    def select_all_from_hash(self, hash):
+        return self.select("all_from_hash", [hash])
 
 if __name__ == "__main__":
     from socket import gethostname as hostname
@@ -25,8 +28,10 @@ if __name__ == "__main__":
     from os.path import join as join_path
     fqpn = join_path(dirname(realpath(abspath(argv[0]))), "dbi.py")
     finfo = mkdict_finfo(fqpn)
-    hdbi = dbi_reader("test_dbi.db", False)
+    d = dbi_reader({"dbn":"FileHash","user":"FileHash","pass":"dbms","host":"losmuertos"},{})
 
-    print("{}".format(hdbi.select_hid_from_hn(hostname())));
+    print("All from FQPN: {}".format(d.select_all_from_fqpn()));
+    print("Distinct Hash: {}".format(d.select_distinct_hashes()));
+    print("All from hash 'F00BADCEA052234': {}".format(d.select_all_from_hash('F00BADCEA052234')))
 
     raise RuntimeError("this is meant to be imported")

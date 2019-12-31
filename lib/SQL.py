@@ -10,11 +10,15 @@ class SQL:
 
     SELECT['all_from_fqdn'] = '''SELECT * FROM `vw_fqdn`'''
     SELECT['all_from_fqpn'] = '''SELECT * FROM `vw_fqpn`'''
+
     SELECT['hid_from_hn'] = '''SELECT `id` FROM `hosts` WHERE `hn` = %s'''
     SELECT['did_from_dn'] = '''SELECT `id` FROM `dirs`  WHERE `dn` = %s'''
+
     SELECT['hid_from_fqdn'] = '''SELECT `hid` FROM `vw_fqdn` WHERE `fqdn` = %s'''
     SELECT['did_from_fqdn'] = '''SELECT `did` FROM `vw_fqdn` WHERE `fqdn` = %s'''
 
+    SELECT['distinct_hashes'] = '''SELECT DISTINCT `hash` FROM `vw_fqpn`'''
+    SELECT['all_from_hash'] = '''SELECT * FROM `vw_fqpn` WHERE `hash` = %s'''
 
     INSERT['hn'] =\
     '''INSERT IGNORE INTO `hosts`(`hn`) VALUES(%s)'''

@@ -2,7 +2,7 @@
 
 from sys import argv
 from os import listdir as ls
-from os.path import dirname, basename, realpath, abspath, isdir, isfile, islink, join as join_path
+from os.path import dirname, basename, realpath, abspath, isdir, isfile, islink, join as join_path, getsize, getmtime
 from site import addsitedir
 
 addsitedir(dirname(realpath(abspath(argv[0]))))
