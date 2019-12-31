@@ -1,7 +1,7 @@
 # FileHash
 pyhton program to scan files, hash them and store those with metadata in dbms:MariaDB
 
-Configiuration:
+Configuration:
 1. install python3
 2. install MariaDB
 3. install mysql-connector for python3
