@@ -1,5 +1,5 @@
 # FileHash
-pyhton program to scan files, hash them and store those with metadata in dbms:MariaDB
+python program to scan files, hash them and store those with metadata in dbms:MariaDB
 
 Configuration:
 1. install python3
