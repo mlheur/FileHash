@@ -18,10 +18,10 @@ class dbi_reader(dbi):
         return self.select("distinct_hashes")
 
     def select_all_from_fqpn_where_hash_is(self, hash):
-        return self.select("from_fqpn_where_hash_is", [hash])
+        return self.select("all_from_fqpn_where_hash_is", [hash])
 
     def select_all_from_fqpn_where_fqpn_is(self, hn, dn, fn):
-        return self.select("from_fqpn_where_fqpn_is", [hn,dn,fn])
+        return self.select("all_from_fqpn_where_fqpn_is", [hn,dn,fn])
 
 if __name__ == "__main__":
     from socket import gethostname as hostname

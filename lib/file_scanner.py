@@ -14,12 +14,14 @@ class file_scanner(object):
     def __init__(self, dbi):
         self.dbi = dbi
         self.INCLUDE = [".profile"]
-        self.EXCLUDE = [".DS_Store", "Thumbs.db", "Code Cache", "Cache", ".PyCharmCE2019.3"]
+        self.EXCLUDE = [".DS_Store", "Thumbs.db", "Code Cache", "Cache", ".PyCharmCE2019.3", "__pycache__", ".git"]
         self.rehash = False
 
     def is_skippable(self, fqpn):
         if basename(fqpn) in self.INCLUDE: return False
         if basename(fqpn) in self.EXCLUDE: return True
+        if basename(dirname(fqpn)) in self.EXCLUDE: return True
+        if basename(dirname(fqpn)) in self.EXCLUDE: return True
         return False
 
     def mkfile(self, fqpn):
@@ -59,7 +61,8 @@ class file_scanner(object):
 if __name__ == "__main__":
     from hash_dbi import hash_dbi as dbi
 
-    hdbi = dbi("test_file_scanner.db", True).createdb()
+    hdbi = dbi()
     file_scanner(hdbi).scan([realpath(abspath(".."))])
-    hdbi.report()
+    print(hdbi.select_all_from_fqpn())
+#    hdbi.report()
     raise RuntimeError("this is meant to be imported")

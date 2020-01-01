@@ -15,8 +15,10 @@ class hash_dbi(dbi):
 
     def mk_fqpn_dict(self,fqpn_struct):
         R = {}
-        K = ["hn","dn","fn","size","mtime","hash"]
+        K = ["hn","dn","fn","size","mtime","hash","fqdn","fqpn"]
         for i in range(0,len(fqpn_struct)):
+            if i>=len(fqpn_struct) or i>=len(K):
+               break
             R[K[i]] = fqpn_struct[i]
         return R
 
@@ -25,7 +27,7 @@ class hash_dbi(dbi):
                 dirname(fqpn),
                 basename(fqpn),
                 getsize(fqpn),
-                getmtime(fqpn)]
+                int(getmtime(fqpn))]
     
     def mk_fqpn_struct(self,fqpn,hash):
         R = self.mk_fqpn_struct_prehash(fqpn)
@@ -35,7 +37,7 @@ class hash_dbi(dbi):
     def changed(self,existing,ondisk):
         K = ["size","mtime"]
         for i in range(0,len(K)):
-            if existing[i] != ondisk[i]:
+            if existing[K[i]] != ondisk[K[i]]:
                 return True
         return False
 
@@ -43,7 +45,7 @@ class hash_dbi(dbi):
         fqpn_struct = self.mk_fqpn_struct_prehash(fqpn)
         existing = self.select_all_from_fqpn_where_fqpn_is(fqpn_struct[0],fqpn_struct[1],fqpn_struct[2])
         if len(existing) == 0\
-        or self.changed(mk_fqpn_dict(existing[0]), mk_fqpn_dict(fqpn_struct)):
+        or self.changed(self.mk_fqpn_dict(existing[0]), self.mk_fqpn_dict(fqpn_struct)):
             rehash = True
         if rehash:
             fqpn_struct = self.mk_fqpn_struct(fqpn,hash(fqpn))
@@ -51,8 +53,38 @@ class hash_dbi(dbi):
                 print("debug: fqpn_struct={}".format(fqpn_struct))
             self.insert_fqpn(fqpn_struct)
 
+    def mk_dict_hash_fqpn_list(self):
+        table = {}
+        for _h in self.select_distinct_hashes():
+            h = _h[0]
+            table[h] = []
+            for record in self.select_all_from_fqpn_where_hash_is(h):
+                print("got record {}".format(record))
+                table[h].append(self.mk_fqpn_dict(record))
+
+        if "debug" in self.printargs and self.printargs["debug"] == True:
+            print("debug: returning table {}".format(table))
+
+        return table
+
+    def report(self,opts=["0","1","+"]):
+        for [hash, fqpn_dict_list] in self.mk_dict_hash_fqpn_list().items():
+            if len(fqpn_dict_list) < 1:
+                if "0" in opts:
+                    print("ERROR: Orphaned Hash: {}".format(hash))
+            elif len(fqpn_dict_list) > 1:
+                if "+" in opts:
+                    print("Duplicated Hash: {}".format(hash))
+                    for f in fqpn_dict_list:
+                        print(" ... {}".format(f["fqpn"]))
+            else:
+                if "1" in opts:
+                    print("Unique hash: {} {}".format(fqpn_dict_list[0]["hash"], fqpn_dict_list[0]["fqpn"]))
+        return self
+
 if __name__ == "__main__":
-    d = hash_dbi(printargs={"debug":True})
+    d = hash_dbi(printargs={"debug":True,"verbose":True,"quiet":False})
     d.addfile(abspath(realpath(argv[0])))
     print(d.select_all_from_fqpn())
+    d.report()
     raise RuntimeError("this is meant to be imported")

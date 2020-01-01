@@ -18,8 +18,8 @@ class SQL:
     SELECT['fqdn_from_fqdn_where_hn_dn'] = '''SELECT `fqdn` FROM `vw_fqdn` WHERE `hn` = %s AND `dn` = %s'''
 
     SELECT['distinct_hashes'] = '''SELECT DISTINCT `hash` FROM `vw_fqpn`'''
-    SELECT['from_fqpn_where_hash_is'] = '''SELECT * FROM `vw_fqpn` WHERE `hash` = %s'''
-    SELECT['from_fqpn_where_fqpn_is'] = '''SELECT * FROM `vw_fqpn` WHERE `hn` = %s AND `dn` = %s AND `fn` = %s'''
+    SELECT['all_from_fqpn_where_hash_is'] = '''SELECT * FROM `vw_fqpn` WHERE `hash` = %s'''
+    SELECT['all_from_fqpn_where_fqpn_is'] = '''SELECT * FROM `vw_fqpn` WHERE `hn` = %s AND `dn` = %s AND `fn` = %s'''
 
     INSERT['hn'] =\
     '''INSERT IGNORE INTO `hosts`(`hn`) VALUES(%s)'''
