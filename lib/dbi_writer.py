@@ -6,7 +6,6 @@ from site import addsitedir
 
 addsitedir(dirname(realpath(abspath(argv[0]))))
 from dbi_reader import dbi_reader as dbi
-from file_hasher import mklist_dinfo
 
 
 class dbi_writer(dbi):
@@ -31,9 +30,8 @@ class dbi_writer(dbi):
 
 if __name__ == "__main__":
     from socket import gethostname as hostname
-    from file_hasher import hash, mkdict_finfo
 
-    d = dbi_writer({"dbn":"FileHash","user":"FileHash","pass":"dbms","host":"losmuertos"},{})
+    d = dbi_writer()
     fqpn = realpath(abspath(argv[0]))
     d.insert_hn(hostname())
     d.insert_dn(dirname(fqpn))

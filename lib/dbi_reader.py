@@ -7,8 +7,6 @@ from site import addsitedir
 addsitedir(dirname(realpath(abspath(argv[0]))))
 from dbi import dbi as dbi
 from dbi import TransactionError as TE
-from file_hasher import mklist_finfo, mkdict_finfo, mkdict_dinfo
-
 
 class dbi_reader(dbi):
     """ wrapped select fuctions for dbi """
@@ -27,15 +25,13 @@ class dbi_reader(dbi):
 
 if __name__ == "__main__":
     from socket import gethostname as hostname
-    from file_hasher import mkdict_finfo
     from os.path import join as join_path
     fqpn = join_path(dirname(realpath(abspath(argv[0]))), "dbi.py")
-    finfo = mkdict_finfo(fqpn)
-    d = dbi_reader({"dbn":"FileHash","user":"FileHash","pass":"dbms","host":"losmuertos"},{})
+    d = dbi_reader(printargs={"quiet": False, "verbose": True, "debug": True})
 
     print("All from FQPN: {}".format(d.select_all_from_fqpn()));
     print("Distinct Hash: {}".format(d.select_distinct_hashes()));
-    print("All from fqpn where hash is 'F00BADCEA052234': {}".format(d.select_all_from_hash('F00BADCEA052234')))
-    print("All from fqpn where fqpn is '': {}".format(d.select_all_from_hash('F00BADCEA052234')))
+    print("All from fqpn where hash is 'F00BADCEA052234': {}".format(d.select_all_from_fqpn_where_hash_is('F00BADCEA052234')))
+    print("All from fqpn where fqpn is [{}, {}, {}]: {}".format(hostname(),dirname(fqpn),basename(fqpn),d.select_all_from_fqpn_where_fqpn_is(hostname(),dirname(fqpn),basename(fqpn))))
 
     raise RuntimeError("this is meant to be imported")

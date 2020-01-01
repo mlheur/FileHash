@@ -56,10 +56,10 @@ CREATE TABLE `file_in_dir`
 (`hid` BIGINT UNSIGNED NOT NULL
 ,`did` BIGINT UNSIGNED NOT NULL
 ,`hash` VARCHAR(64) NOT NULL
-,`fn` TEXT NOT NULL
+,`fn` VARCHAR(255) NOT NULL
 ,`size` BIGINT UNSIGNED NOT NULL
 ,`mtime` INT UNSIGNED NOT NULL
-,`id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT
+,PRIMARY KEY(`hid`,`did`,`fn`)
 ,CONSTRAINT `pk_hid`
  FOREIGN KEY (`hid`)
  REFERENCES `dir_on_host` (`did`)
@@ -70,9 +70,8 @@ CREATE TABLE `file_in_dir`
  ON DELETE CASCADE
 ) ENGINE=MyISAM;
 
-CREATE VIEW `vw_fqpn` (`id`,`hn`,`dn`,`fn`,`size`,`mtime`,`hash`,`fqdn`,`fqpn`) AS
-SELECT `fd`.`id`
-,`vw_fqdn`.`hn`
+CREATE VIEW `vw_fqpn` (`hn`,`dn`,`fn`,`size`,`mtime`,`hash`,`fqdn`,`fqpn`) AS
+SELECT `vw_fqdn`.`hn`
 ,`vw_fqdn`.`dn`
 ,`fd`.`fn`
 ,`fd`.`size`

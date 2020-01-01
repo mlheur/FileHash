@@ -6,8 +6,6 @@ class SQL:
     SELECT = {}
     DELETE = {}
 
-
-
     SELECT['all_from_fqdn'] = '''SELECT * FROM `vw_fqdn`'''
     SELECT['all_from_fqpn'] = '''SELECT * FROM `vw_fqpn`'''
 
@@ -17,9 +15,11 @@ class SQL:
     SELECT['hid_from_fqdn'] = '''SELECT `hid` FROM `vw_fqdn` WHERE `fqdn` = %s'''
     SELECT['did_from_fqdn'] = '''SELECT `did` FROM `vw_fqdn` WHERE `fqdn` = %s'''
 
+    SELECT['fqdn_from_fqdn_where_hn_dn'] = '''SELECT `fqdn` FROM `vw_fqdn` WHERE `hn` = %s AND `dn` = %s'''
+
     SELECT['distinct_hashes'] = '''SELECT DISTINCT `hash` FROM `vw_fqpn`'''
     SELECT['from_fqpn_where_hash_is'] = '''SELECT * FROM `vw_fqpn` WHERE `hash` = %s'''
-    SELECT['from_fqpn_where_fqpn_is"] = '''SELECT * `vw_fqpn` WHERE `hn` = %s AND `dn` = %s AND `fn` = %s'''
+    SELECT['from_fqpn_where_fqpn_is'] = '''SELECT * FROM `vw_fqpn` WHERE `hn` = %s AND `dn` = %s AND `fn` = %s'''
 
     INSERT['hn'] =\
     '''INSERT IGNORE INTO `hosts`(`hn`) VALUES(%s)'''
@@ -28,7 +28,7 @@ class SQL:
     '''INSERT IGNORE INTO `dirs` (`dn`) VALUES(%s)'''
 
     INSERT['dh'] =\
-    '''INSERT INTO `dir_on_host` (`hid`,`did`)
+    '''INSERT IGNORE INTO `dir_on_host` (`hid`,`did`)
        VALUES(({}),({}))'''\
     .format(SELECT['hid_from_hn'],SELECT['did_from_dn'])
 

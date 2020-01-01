@@ -4,11 +4,12 @@ from sys import argv
 from os import unlink
 from os.path import abspath, realpath, dirname, basename
 from mysql import connector as dbms
+from time import sleep, time as now
 from site import addsitedir
 
 addsitedir(dirname(realpath(argv[0])))
 from SQL import SQL
-from time import sleep, time as now
+from mycnf import mycnf
 
 class TransactionError(Exception):
     def __init__(self, arg):
@@ -18,18 +19,20 @@ class TransactionError(Exception):
 class dbi(object):
     """ Interface to store and retrieve file hash info.  """
 
-    def __init__(self, dbargs, printargs):
+    def __init__(self, dbargs=None, printargs={"verbose":False,"debug":False,"quiet":True}):
         """ Instantiate an interface with a particular data base. """
         self.printargs = printargs
         self.dbargs = dbargs
+        if dbargs is None:
+           self.dbargs = mycnf().__dict__
         self.conn = None
         self.attached = False
         self.conn = None
         self.attach(self.dbargs)
 
-    def attach(self, dbargs={}):
+    def attach(self, dbargs=None):
         self.attached = False
-        if len(dbargs) == 0:
+        if dbargs is None:
             dbargs = self.dbargs
 
         if "verbose" in self.printargs.keys() and self.printargs["verbose"]:
@@ -38,9 +41,9 @@ class dbi(object):
         if "keepalive" in dbargs and not dbargs["keepalive"]:
             self.close()
         try:
-            d = dbargs["dbn"]
+            d = dbargs["database"]
             u = dbargs["user"]
-            p = dbargs["pass"]
+            p = dbargs["password"]
             h = dbargs["host"]
             if "debug" in self.printargs and self.printargs["debug"]: print("d:{} u:{} p:{} h:{}".format(d,u,p,h))
             self.conn = dbms.connect(database=d
@@ -55,7 +58,7 @@ class dbi(object):
             self.close()
             raise RuntimeError("Unable to connect to the database")
         self.c = self.conn.cursor()
-        stmt_use = "USE `{}`;".format(dbargs["dbn"])
+        stmt_use = "USE `{}`;".format(dbargs["database"])
         if "debug" in self.printargs and self.printargs["debug"]:
             print("got cursor {}, executing {}".format(self.c,stmt_use))
         self.c.execute(stmt_use)
@@ -66,7 +69,7 @@ class dbi(object):
         print("{}".format(self))
 
     def __str__(self):
-        return "dbn=[{}] conn=[{}] c=[{}]".format(self.dbargs["dbn"], self.conn, self.c)
+        return "database=[{}] conn=[{}] c=[{}]".format(self.dbargs["database"], self.conn, self.c)
 
     def close(self):
         if self.conn is None: return self
@@ -135,27 +138,19 @@ class dbi(object):
         return self
 
 if __name__ == "__main__":
-    _dbargs = {"dbn"       : "FileHash"
-              ,"user"      : "FileHash"
-              ,"pass"      : "dbms"
-              ,"host"      : "localhost"
-              ,"keepalive" : False
-    }
-
-    _printargs = {"quiet": False
-                 ,"verbose": True
-                 ,"debug": True
-    }
-
-    d = dbi(_dbargs,_printargs)
+    d = dbi(printargs={"quiet": False, "verbose": True, "debug": True})
     f = realpath(abspath(argv[0]))
     from socket import gethostname as hostname
     from file_hasher import hash
 
     h = hash(f)
     d.insert("hn",[hostname()])
+    hid = d.select("hid_from_hn",[hostname()])[0][0]
     d.insert("dn",[dirname(f)])
+    did = d.select("did_from_dn",[dirname(f)])[0][0]
     d.insert("dh",[hostname(),dirname(f)])
-    d.select("all_from_fqdn")
+    fqdn = d.select("fqdn_from_fqdn_where_hn_dn",[hostname(),dirname(f)])[0][0]
+    d.insert("fqpn",[fqdn,fqdn,basename(f),321,18726423,"ABCD18742391"])
+    d.select("all_from_fqpn")
 
     raise RuntimeError("this is meant to be imported")
