@@ -16,15 +16,11 @@ class FileHash(object):
     def __init__(self, mode, opts):
         self.mode = mode
         self.opts = opts
-        self.dbi = dbi("hashtable.db")
+        self.dbi = dbi()
         self.scanner = scanner(self.dbi)
 
     def run(self): getattr(self, self.mode, lambda: 'Invalid')()
-
-    def createdb(self): self.dbi.createdb()
-
     def scan(self): self.scanner.scan(self.opts)
-
     def report(self): self.dbi.report(self.opts)
 
     # ToDo: def prune(self): # remove hashtable entries against

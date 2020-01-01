@@ -59,7 +59,6 @@ class hash_dbi(dbi):
             h = _h[0]
             table[h] = []
             for record in self.select_all_from_fqpn_where_hash_is(h):
-                print("got record {}".format(record))
                 table[h].append(self.mk_fqpn_dict(record))
 
         if "debug" in self.printargs and self.printargs["debug"] == True:
