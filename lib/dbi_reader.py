@@ -19,8 +19,11 @@ class dbi_reader(dbi):
     def select_distinct_hashes(self):
         return self.select("distinct_hashes")
 
-    def select_all_from_hash(self, hash):
-        return self.select("all_from_hash", [hash])
+    def select_all_from_fqpn_where_hash_is(self, hash):
+        return self.select("from_fqpn_where_hash_is", [hash])
+
+    def select_all_from_fqpn_where_fqpn_is(self, hn, dn, fn):
+        return self.select("from_fqpn_where_fqpn_is", [hn,dn,fn])
 
 if __name__ == "__main__":
     from socket import gethostname as hostname
@@ -32,6 +35,7 @@ if __name__ == "__main__":
 
     print("All from FQPN: {}".format(d.select_all_from_fqpn()));
     print("Distinct Hash: {}".format(d.select_distinct_hashes()));
-    print("All from hash 'F00BADCEA052234': {}".format(d.select_all_from_hash('F00BADCEA052234')))
+    print("All from fqpn where hash is 'F00BADCEA052234': {}".format(d.select_all_from_hash('F00BADCEA052234')))
+    print("All from fqpn where fqpn is '': {}".format(d.select_all_from_hash('F00BADCEA052234')))
 
     raise RuntimeError("this is meant to be imported")
