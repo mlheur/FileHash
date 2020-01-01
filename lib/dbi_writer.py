@@ -23,7 +23,18 @@ class dbi_writer(dbi):
             self.insert_dn(dn)
         self.insert("dh",[hn,dn])
 
-    def insert_fqpn(self,hn,dn,fn,size,mtime,hash):
+    def insert_fqpn(self,hn,dn=None,fn=None,size=None,mtime=None,hash=None):
+        if "debug" in self.printargs and self.printargs["debug"] == True:
+            print("debug: hn={} dn={}".format(hn,dn))
+        if type(hn) == type([]):
+           hash = hn[5]
+           mtime = hn[4]
+           size = hn[3]
+           fn = hn[2]
+           dn = hn[1]
+           hn = hn[0]
+        if dn is None:
+           raise RuntimeError("required positional argument(2) dn is missing")
         fqdn = hn+":"+dn
         self.insert_dh(hn,dn,True)
         self.insert("fqpn",[fqdn,fqdn,fn,size,mtime,hash])
