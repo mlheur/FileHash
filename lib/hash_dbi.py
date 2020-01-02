@@ -55,11 +55,12 @@ class hash_dbi(dbi):
 
     def mk_dict_hash_fqpn_list(self):
         table = {}
-        for _h in self.select_distinct_hashes():
-            h = _h[0]
-            table[h] = []
-            for record in self.select_all_from_fqpn_where_hash_is(h):
-                table[h].append(self.mk_fqpn_dict(record))
+
+        for row in self.select_all_from_fqpn():
+            fd = self.mk_fqpn_dict(row)
+            if not fd["hash"] in table:
+                table[fd["hash"]] = []
+            table[fd["hash"]].append(fd)
 
         if "debug" in self.printargs and self.printargs["debug"] == True:
             print("debug: returning table {}".format(table))
@@ -75,7 +76,7 @@ class hash_dbi(dbi):
                 if "+" in opts:
                     print("Duplicated Hash: {}".format(hash))
                     for f in fqpn_dict_list:
-                        print(" ... {}".format(f["fqpn"]))
+                        print(" ... {} {} {}".format(f["mtime"],f["size"],f["fqpn"]))
             else:
                 if "1" in opts:
                     print("Unique hash: {} {}".format(fqpn_dict_list[0]["hash"], fqpn_dict_list[0]["fqpn"]))
