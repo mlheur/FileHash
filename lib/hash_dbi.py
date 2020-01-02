@@ -67,7 +67,9 @@ class hash_dbi(dbi):
 
         return table
 
-    def report(self,opts=["0","1","+"]):
+    def report(self,opts=None):
+        if opts is None or len(opts) == 0:
+            opts = "0","1","+"
         for [hash, fqpn_dict_list] in self.mk_dict_hash_fqpn_list().items():
             if len(fqpn_dict_list) < 1:
                 if "0" in opts:
