@@ -26,8 +26,9 @@ class dbi_reader(dbi):
 if __name__ == "__main__":
     from socket import gethostname as hostname
     from os.path import join as join_path
+    from file_sifter import file_sifter as sifter
     fqpn = join_path(dirname(realpath(abspath(argv[0]))), "dbi.py")
-    d = dbi_reader(printargs={"quiet": False, "verbose": True, "debug": True})
+    d = dbi_reader(sifter(),printargs={"quiet": False, "verbose": True, "debug": True})
 
     print("All from FQPN: {}".format(d.select_all_from_fqpn()));
     print("Distinct Hash: {}".format(d.select_distinct_hashes()));

@@ -7,25 +7,19 @@ from site import addsitedir
 
 addsitedir(dirname(realpath(abspath(argv[0]))))
 
+from file_sifter import file_sifter as sifter
+
 
 class file_scanner(object):
     """ Performs filesysem and hashing operations necessary to load file info into the database interface. """
 
-    def __init__(self, dbi):
+    def __init__(self, dbi, sifter):
         self.dbi = dbi
-        self.INCLUDE = [".profile"]
-        self.EXCLUDE = [".DS_Store", "Thumbs.db", "Code Cache", "Cache", ".PyCharmCE2019.3", "__pycache__", ".git"]
+        self.sifter = sifter
         self.rehash = False
 
-    def is_skippable(self, fqpn):
-        if basename(fqpn) in self.INCLUDE: return False
-        if basename(fqpn) in self.EXCLUDE: return True
-        if basename(dirname(fqpn)) in self.EXCLUDE: return True
-        if basename(dirname(fqpn)) in self.EXCLUDE: return True
-        return False
-
     def mkfile(self, fqpn):
-        if self.is_skippable(fqpn):
+        if self.sifter.is_skippable(fqpn):
             return
         self.dbi.addfile(fqpn, self.rehash)
 
@@ -39,7 +33,7 @@ class file_scanner(object):
                     fqpn = join_path(dir, dirent)
                     if islink(fqpn):
                         continue
-                    if isdir(fqpn) and not self.is_skippable(fqpn):
+                    if isdir(fqpn) and not self.sifter.is_skippable(fqpn):
                         self.scandir(fqpn)
                     if isfile(fqpn):
                         self.mkfile(fqpn)

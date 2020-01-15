@@ -24,8 +24,7 @@ class dbi_writer(dbi):
         self.insert("dh",[hn,dn])
 
     def insert_fqpn(self,hn,dn=None,fn=None,size=None,mtime=None,hash=None):
-        if "debug" in self.printargs and self.printargs["debug"] == True:
-            print("debug: hn={} dn={}".format(hn,dn))
+        self.dbg("hn={} dn={}".format(hn,dn))
         if type(hn) == type([]):
            hash = hn[5]
            mtime = hn[4]
@@ -41,8 +40,9 @@ class dbi_writer(dbi):
 
 if __name__ == "__main__":
     from socket import gethostname as hostname
+    from file_sifter import file_sifter as sifter
 
-    d = dbi_writer()
+    d = dbi_writer(sifter())
     fqpn = realpath(abspath(argv[0]))
     d.insert_hn(hostname())
     d.insert_dn(dirname(fqpn))

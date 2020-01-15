@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from sys import argv, stderr
-from os import chdir
+from os import chdir, environ
 from os.path import realpath, dirname, join as join_path
 from site import addsitedir
 
@@ -10,14 +10,17 @@ addsitedir(basedir)
 addsitedir(join_path(basedir, "lib"))
 from hash_dbi import hash_dbi as dbi
 from file_scanner import file_scanner as scanner
-
+from file_sifter import file_sifter as sifter
 
 class FileHash(object):
     def __init__(self, mode, opts):
         self.mode = mode
         self.opts = opts
-        self.dbi = dbi()
-        self.scanner = scanner(self.dbi)
+        self.sifter = sifter()
+        self.dbi = dbi(self.sifter)
+        self.scanner = scanner(self.dbi,self.sifter)
+        if "debug" in environ and int(environ["debug"]) > 0:
+            self.dbi.printargs["debug"] = True
 
     def run(self): getattr(self, self.mode, lambda: 'Invalid')()
     def scan(self): self.scanner.scan(self.opts)

@@ -42,6 +42,8 @@ class hash_dbi(dbi):
         return False
 
     def addfile(self, fqpn, rehash=False):
+        if self.sifter.is_skippable(fqpn):
+            return
         fqpn_struct = self.mk_fqpn_struct_prehash(fqpn)
         existing = self.select_all_from_fqpn_where_fqpn_is(fqpn_struct[0],fqpn_struct[1],fqpn_struct[2])
         if len(existing) == 0\
@@ -49,27 +51,28 @@ class hash_dbi(dbi):
             rehash = True
         if rehash:
             fqpn_struct = self.mk_fqpn_struct(fqpn,hash(fqpn))
-            if "debug" in self.printargs and self.printargs["debug"] == True:
-                print("debug: fqpn_struct={}".format(fqpn_struct))
+            self.dbg("fqpn_struct={}".format(fqpn_struct))
             self.insert_fqpn(fqpn_struct)
 
     def mk_dict_hash_fqpn_list(self):
         table = {}
-
         for row in self.select_all_from_fqpn():
             fd = self.mk_fqpn_dict(row)
+            if self.sifter.is_skippable(fd):
+                continue
             if not fd["hash"] in table:
                 table[fd["hash"]] = []
             table[fd["hash"]].append(fd)
-
-        if "debug" in self.printargs and self.printargs["debug"] == True:
-            print("debug: returning table {}".format(table))
-
+        self.dbg("returning table {}".format(table))
         return table
 
-    def report(self,opts=None):
+    def report(self,opts={}):
+        self.dbg("opts: [0]: {}".format(opts))
+        opts = self.sifter.parse_opts(opts)
+        self.dbg("opts: [1]: {}".format(opts))
         if opts is None or len(opts) == 0:
             opts = "0","1","+"
+        self.dbg("opts: [2]: {}".format(opts))
         for [hash, fqpn_dict_list] in self.mk_dict_hash_fqpn_list().items():
             if len(fqpn_dict_list) < 1:
                 if "0" in opts:
@@ -85,7 +88,8 @@ class hash_dbi(dbi):
         return self
 
 if __name__ == "__main__":
-    d = hash_dbi(printargs={"debug":True,"verbose":True,"quiet":False})
+    from file_sifter import file_sifter as sifter
+    d = hash_dbi(sifter(),printargs={"debug":True,"verbose":True,"quiet":False})
     d.addfile(abspath(realpath(argv[0])))
     print(d.select_all_from_fqpn())
     d.report()

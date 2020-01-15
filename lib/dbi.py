@@ -19,8 +19,9 @@ class TransactionError(Exception):
 class dbi(object):
     """ Interface to store and retrieve file hash info.  """
 
-    def __init__(self, dbargs=None, printargs={"verbose":False,"debug":False,"quiet":True}):
+    def __init__(self, sifter, dbargs=None, printargs={"verbose":False,"debug":False,"quiet":True}):
         """ Instantiate an interface with a particular data base. """
+        self.sifter = sifter
         self.printargs = printargs
         self.dbargs = dbargs
         if dbargs is None:
@@ -35,8 +36,7 @@ class dbi(object):
         if dbargs is None:
             dbargs = self.dbargs
 
-        if "verbose" in self.printargs.keys() and self.printargs["verbose"]:
-            print("Calling attach with dbargs {}".format(dbargs))
+        self.dbg("Calling attach with dbargs {}".format(dbargs))
 
         if "keepalive" in dbargs and not dbargs["keepalive"]:
             self.close()
@@ -45,7 +45,7 @@ class dbi(object):
             u = dbargs["user"]
             p = dbargs["password"]
             h = dbargs["host"]
-            if "debug" in self.printargs and self.printargs["debug"]: print("d:{} u:{} p:{} h:{}".format(d,u,p,h))
+            self.dbg("d:{} u:{} p:{} h:{}".format(d,u,p,h))
             self.conn = dbms.connect(database=d
                                     ,user=u
                                     ,password=p
@@ -59,8 +59,7 @@ class dbi(object):
             raise RuntimeError("Unable to connect to the database")
         self.c = self.conn.cursor()
         stmt_use = "USE `{}`;".format(dbargs["database"])
-        if "debug" in self.printargs and self.printargs["debug"]:
-            print("got cursor {}, executing {}".format(self.c,stmt_use))
+        self.dbg("got cursor {}, executing {}".format(self.c,stmt_use))
         self.c.execute(stmt_use)
         self.attached = True
         return self
@@ -79,16 +78,14 @@ class dbi(object):
 
     def q(self, stmt, vals=None, call="Q"):
         if self.attached and (stmt is not None and stmt != ""):
-            if "verbose" in self.printargs and self.printargs["verbose"]:
-                print("{}:[{}]\nV:[{}]".format(call, stmt, vals))
+            self.dbg("{}:[{}]\nV:[{}]".format(call, stmt, vals))
             try:
                 if vals is not None:
                     self.c.execute(stmt, vals)
                 else:
                     self.c.execute(stmt)
             except Exception as e:
-                if "verbose" in self.printargs and self.printargs["verbose"]:
-                    print("sql error {}".format(e))
+                self.dbg("sql error {}".format(e))
                 return None
             try:
                 return self.c.fetchall()
@@ -123,8 +120,7 @@ class dbi(object):
 
     def select(self, key, vals=None):
         R = self.q(SQL.SELECT[key], vals, "S")
-        if "verbose" in self.printargs and self.printargs["verbose"]:
-            print("R:[{}]".format(R))
+        self.dbg("R:[{}]".format(R), "verbose")
         if R is None:
             return []
         return R
@@ -137,8 +133,13 @@ class dbi(object):
         self.q(SQL.CREATE[table])
         return self
 
+    def dbg(self, msg, prefix="debug"):
+        if prefix in self.printargs and self.printargs[prefix] == True:
+            print("{}: {}".format(prefix,msg))
+
 if __name__ == "__main__":
-    d = dbi(printargs={"quiet": False, "verbose": True, "debug": True})
+    from file_sifter import file_sifter as sifter
+    d = dbi(sifter(),printargs={"quiet": False, "verbose": True, "debug": True})
     f = realpath(abspath(argv[0]))
     from socket import gethostname as hostname
     from file_hasher import hash
